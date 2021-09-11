@@ -18,4 +18,4 @@ Call Stack                          APIs
  - 메인스레드 작업
 
 Event Loop
- - Callback Queue (서버응답) 을 Client 에 전달
+ - Callback Queue (서버응답) 을 Client 에 전달2
