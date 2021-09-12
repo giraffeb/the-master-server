@@ -1,7 +1,7 @@
 module.exports = {
   ...require('./Blog'),
   ...require('./Comment'),
-  ...require('./User'),
+  ...require('./Member'),
   ...require('./Master'),
   ...require('./Grade'),
   ...require('./Review'),
