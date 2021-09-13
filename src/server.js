@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const config = require('./config/key');
 const cookieParser = require('cookie-parser');
+
 const {
   authRouter,
   memberRouter,
@@ -9,8 +10,9 @@ const {
   reviewRouter,
   serviceRouter,
   commentRouter,
-  blogRouter,
+  blogRouter    
 } = require('./routes');
+
 const { generateFakeData } = require('../faker');
 
 const mongoose = require('mongoose');
@@ -34,6 +36,8 @@ const server = async () => {
     app.use('/blog/:blogId/comment', commentRouter);
     app.use('/service', serviceRouter);
     app.use('/service/:serviceId/review', reviewRouter);
+    app.use('/common', require('./routes/common/categoryRoute'));
+    app.use('/main', require('./routes/mainRoute'));
 
     // Server Port
     app.listen(3000, () => {
