@@ -1,53 +1,12 @@
-const asyncHandler = require('express-async-handler');
 const { Master } = require('../models/Master');
-const { generateToken } = require('../utils/generateToken');
 const config = require('../config/key');
+const { generateToken } = require('../utils/generateToken');
+const mongoose = require('mongoose');
 
-// @desc      Get a Master
-// @route     Get /
+// @desc      Register Master
+// @route     POST master/register
 // @access    Public
-const getMasters = asyncHandler(async (req, res, next) => {
-  const masters = await Master.find({});
-
-  if (!master) return { message: '마스터 정보를 불러올 수 없습니다. !!' };
-
-  return res.json({ masters });
-});
-
-// @desc      Get a Master
-// @route     Get /:masterId
-// @access    Private
-const getMaster = asyncHandler(async (req, res, next) => {
-  const { masterId } = req.params;
-  if (!mongoose.isValidObjectId(masterId))
-    return res.status(400).json({ error: 'invalid masterId' });
-  const master = await Master.findOne({ _id: masterId });
-  return res.send({ master });
-});
-
-// @desc      Delete a Master
-// @route     delete /:masterId
-// @access    Private
-const deleteMaster = asyncHandler(async (req, res, next) => {
-  const { masterId } = req.params;
-  if (!mongoose.isValidObjectId(masterId))
-    return res.status(400).send({ err: 'invalid masterId' });
-
-  const master = await Master.findOneAndDelete({ _id: masterId });
-  return res.json({ master });
-});
-
-// @desc      Put a Master
-// @route     put /:masterId
-// @access    Private
-const putMaster = asyncHandler(async (req, res, next) => {
-  const { masterId } = req.params;
-
-  // Debug
-  // 1. MasterId 형식 점검
-  if (!mongoose.isValidObjectId(masterId))
-    return res.status(400).send({ err: 'invalid masterId' });
-
+const registerMaster = async (req, res, next) => {
   const {
     name,
     gender,
@@ -68,28 +27,167 @@ const putMaster = asyncHandler(async (req, res, next) => {
     lng,
   } = req.body;
 
-  // 2. age or name 이 존재하는지 점검
-  if (!name) return res.status(400).send({ err: 'name is required' });
-  if (!gender) return res.status(400).send({ err: 'gender is required' });
-  if (!email) return res.status(400).send({ err: 'email is required' });
-  if (!password) return res.status(400).send({ err: 'password is required' });
-  if (!phone) return res.status(400).send({ err: 'phone is required' });
-  if (!authentication)
-    return res.status(400).send({ err: 'authentication is required' });
-  if (!fromtime) return res.status(400).send({ err: 'fromtime is required' });
-  if (!totime) return res.status(400).send({ err: 'totime is required' });
-  if (!payment) return res.status(400).send({ err: 'payment is required' });
-  if (!category) return res.status(400).send({ err: 'category is required' });
-  if (!career) return res.status(400).send({ err: 'career is required' });
-  if (!employeesNum)
-    return res.status(400).send({ err: 'employeesNum is required' });
-  if (!businessRegistration)
-    return res.status(400).send({ err: 'businessRegistration is required' });
-  if (!certificate)
-    return res.status(400).send({ err: 'certificate is required' });
-  if (!address) return res.status(400).send({ err: 'address is required' });
-  if (!lat) return res.status(400).send({ err: 'lat is required' });
-  if (!lng) return res.status(400).send({ err: 'lng is required' });
+  const masterExists = await Master.findOne({ email });
+
+  if (masterExists) {
+    res.status(400).json({ message: '유저가 존재합니다.!!' });
+  }
+
+  const master = await Master.create({
+    name,
+    gender,
+    email,
+    password,
+    phone,
+    authentication,
+    fromtime,
+    totime,
+    payment,
+    category,
+    career,
+    employeesNum,
+    businessRegistration,
+    certificate,
+    address,
+    lat,
+    lng,
+  });
+
+  if (master) {
+    res.status(201).json({
+      _id: master._id,
+      name: master.name,
+      gender: master.gender,
+      email: master.email,
+      password: master.password,
+      phone: master.phone,
+      authentication: master.authentication,
+      fromtime: master.fromtime,
+      totime: master.totime,
+      payment: master.payment,
+      category: master.category,
+      career: master.career,
+      employeesNum: master.employeesNum,
+      businessRegistration: master.businessRegistration,
+      certificate: master.certificate,
+      address: master.address,
+      lat: master.lat,
+      lng: master.lng,
+      token: generateToken(master._id),
+    });
+  } else {
+    return res.status(400).json({ message: '마스터 정보가 없습니다.!!' });
+  }
+};
+
+// @desc      Login Master
+// @route     POST master/login
+// @access    Public
+const loginMaster = async (req, res, next) => {
+  const { email, password } = req.body;
+
+  const master = await Master.findOne({ email }).select('+password');
+
+  if (master && (await master.matchPassword(password))) {
+    res.json({
+      _id: master._id,
+      name: master.name,
+      gender: master.gender,
+      email: master.email,
+      phone: master.phone,
+      authentication: master.authentication,
+      fromtime: master.fromtime,
+      totime: master.totime,
+      payment: master.payment,
+      category: master.category,
+      career: master.career,
+      employeesNum: master.employeesNum,
+      businessRegistration: master.businessRegistration,
+      certificate: master.certificate,
+      address: master.address,
+      lat: master.lat,
+      lng: master.lng,
+      token: generateToken(master._id),
+    });
+  } else {
+    res.status(401).send('로그인 정보가 정확하지 않습니다.!!');
+  }
+};
+
+// @desc      Get a Master
+// @route     Get /master
+// @access    Public
+const getMasters = async (req, res, next) => {
+  const masters = await Master.find({}).select('-password');
+
+  if (!masters) return { message: '마스터 정보를 불러올 수 없습니다. !!' };
+
+  return res.json({ masters });
+};
+
+// @desc      Get a Master
+// @route     Get /master/:masterId
+// @access    Public
+const getMaster = async (req, res, next) => {
+  const { masterId } = req.params;
+  if (!mongoose.isValidObjectId(masterId))
+    return res.status(400).json({ error: 'invalid masterId' });
+  const master = await Master.findOne({ _id: masterId }).select('-password');
+  return res.send({ master });
+};
+
+// @desc      Delete a Master
+// @route     delete /master/:masterId
+// @access    Private
+const deleteMaster = async (req, res, next) => {
+  const { masterId } = req.params;
+
+  if (!mongoose.isValidObjectId(masterId))
+    return res.status(400).send({ err: 'invalid masterId' });
+
+  if (req.master._id.toString() === masterId) {
+    const master = await Master.findOneAndDelete({ _id: masterId }).select(
+      '-password'
+    );
+    return res.json({ master });
+  }
+  return res.status(400).json({ message: '인증정보가 정확하지 않습니다.!!' });
+};
+
+// @desc      Put a Master
+// @route     put /master/:masterId
+// @access    Private
+const putMaster = async (req, res, next) => {
+  const { masterId } = req.params;
+
+  // Debug
+  // 1. MasterId 형식 점검
+  if (!mongoose.isValidObjectId(masterId))
+    return res.status(400).send({ err: 'invalid masterId' });
+
+  if (!req.master._id.toString() === masterId) {
+    return res.status(400).json({ message: '인증정보가 일치하지 않습니다!!' });
+  }
+
+  const {
+    name,
+    gender,
+    email,
+    password,
+    phone,
+    authentication,
+    fromtime,
+    totime,
+    payment,
+    category,
+    career,
+    employeesNum,
+    businessRegistration,
+    certificate,
+    address,
+    lat,
+    lng,
+  } = req.body;
 
   // 3. 형식 점검
   if (typeof authentication !== 'boolean')
@@ -117,8 +215,7 @@ const putMaster = asyncHandler(async (req, res, next) => {
   // );
 
   // 7. Update 데이터를 찾고 찾은 데이터를 바꾸는 로직. 데이터구조가 복잡할때
-  let master = await Master.findById(masterId);
-  console.log({ masterBeforeEdit: master });
+  let master = await Master.findById(masterId).select('-password');
 
   if (name) master.name = name;
   if (gender) master.gender = gender;
@@ -138,11 +235,16 @@ const putMaster = asyncHandler(async (req, res, next) => {
   if (lat) master.lat = lat;
   if (lng) master.lng = lng;
 
-  console.log({ masterAfterEdit: master });
-
   await master.save();
 
   return res.send({ master });
-});
+};
 
-module.exports = { getMasters, getMaster, deleteMaster, putMaster };
+module.exports = {
+  loginMaster,
+  registerMaster,
+  getMasters,
+  getMaster,
+  deleteMaster,
+  putMaster,
+};

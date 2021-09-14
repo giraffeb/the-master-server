@@ -48,6 +48,12 @@ const memberSchema = Schema(
       type: String,
       required: true,
     },
+    token: { type: String },
+    admin: {
+      type: Boolean,
+      require: true,
+      default: false,
+    },
   },
   { timestamps: true }
 );

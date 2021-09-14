@@ -4,13 +4,10 @@ const config = require('./config/key');
 const cookieParser = require('cookie-parser');
 
 const {
-  authRouter,
   memberRouter,
   masterRouter,
   reviewRouter,
   serviceRouter,
-  commentRouter,
-  blogRouter    
 } = require('./routes');
 
 const { generateFakeData } = require('../faker');
@@ -29,11 +26,8 @@ const server = async () => {
     // await generateFakeData(100, 10, 300);
 
     // Router Setting
-    app.use('/auth', authRouter);
     app.use('/member', memberRouter);
     app.use('/master', masterRouter);
-    app.use('/blog', blogRouter);
-    app.use('/blog/:blogId/comment', commentRouter);
     app.use('/service', serviceRouter);
     app.use('/service/:serviceId/review', reviewRouter);
     app.use('/common', require('./routes/common/categoryRoute'));
