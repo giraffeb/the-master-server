@@ -1,17 +1,38 @@
-const asyncHandler = require('express-async-handler');
-const { Master } = require('../models/Master');
-const { generateToken } = require('../utils/generateToken');
-const config = require('../config/key');
+const asyncHandler = require("express-async-handler");
+const { Master } = require("../models/Master");
+const { generateToken } = require("../utils/generateToken");
+const config = require("../config/key");
+const { Review } = require("../models");
 
 // @desc      Get a Master
 // @route     Get /
 // @access    Public
 const getMasters = asyncHandler(async (req, res, next) => {
-  const masters = await Master.find({});
-
-  if (!master) return { message: '마스터 정보를 불러올 수 없습니다. !!' };
-
-  return res.json({ masters });
+  try {
+    var list = await Review.aggregate([
+      {$group: {_id: "$masterID", avg_score:{$avg: "$score"}, total:{$sum:1}}},
+      {$unwind: {
+        path: "$_id"
+      }},
+      {$lookup:
+          {
+             from: "masters",
+             foreignField: "_id",          // field in the servicecategories collection
+             localField: "_id",            // field in the QuotStep collection
+             as: "master",                   
+          }
+      },
+      {$unwind: {
+        path: "$master"
+      }},
+      {$sort: {total: -1}}
+    ]);
+  
+    return res.json({ list });
+  } catch (err) {
+    console.log('err', err);
+    return res.status(400).json({ list });
+  }
 });
 
 // @desc      Get a Master
@@ -20,7 +41,7 @@ const getMasters = asyncHandler(async (req, res, next) => {
 const getMaster = asyncHandler(async (req, res, next) => {
   const { masterId } = req.params;
   if (!mongoose.isValidObjectId(masterId))
-    return res.status(400).json({ error: 'invalid masterId' });
+    return res.status(400).json({ error: "invalid masterId" });
   const master = await Master.findOne({ _id: masterId });
   return res.send({ master });
 });
@@ -31,7 +52,7 @@ const getMaster = asyncHandler(async (req, res, next) => {
 const deleteMaster = asyncHandler(async (req, res, next) => {
   const { masterId } = req.params;
   if (!mongoose.isValidObjectId(masterId))
-    return res.status(400).send({ err: 'invalid masterId' });
+    return res.status(400).send({ err: "invalid masterId" });
 
   const master = await Master.findOneAndDelete({ _id: masterId });
   return res.json({ master });
@@ -46,7 +67,7 @@ const putMaster = asyncHandler(async (req, res, next) => {
   // Debug
   // 1. MasterId 형식 점검
   if (!mongoose.isValidObjectId(masterId))
-    return res.status(400).send({ err: 'invalid masterId' });
+    return res.status(400).send({ err: "invalid masterId" });
 
   const {
     name,
@@ -69,37 +90,37 @@ const putMaster = asyncHandler(async (req, res, next) => {
   } = req.body;
 
   // 2. age or name 이 존재하는지 점검
-  if (!name) return res.status(400).send({ err: 'name is required' });
-  if (!gender) return res.status(400).send({ err: 'gender is required' });
-  if (!email) return res.status(400).send({ err: 'email is required' });
-  if (!password) return res.status(400).send({ err: 'password is required' });
-  if (!phone) return res.status(400).send({ err: 'phone is required' });
+  if (!name) return res.status(400).send({ err: "name is required" });
+  if (!gender) return res.status(400).send({ err: "gender is required" });
+  if (!email) return res.status(400).send({ err: "email is required" });
+  if (!password) return res.status(400).send({ err: "password is required" });
+  if (!phone) return res.status(400).send({ err: "phone is required" });
   if (!authentication)
-    return res.status(400).send({ err: 'authentication is required' });
-  if (!fromtime) return res.status(400).send({ err: 'fromtime is required' });
-  if (!totime) return res.status(400).send({ err: 'totime is required' });
-  if (!payment) return res.status(400).send({ err: 'payment is required' });
-  if (!category) return res.status(400).send({ err: 'category is required' });
-  if (!career) return res.status(400).send({ err: 'career is required' });
+    return res.status(400).send({ err: "authentication is required" });
+  if (!fromtime) return res.status(400).send({ err: "fromtime is required" });
+  if (!totime) return res.status(400).send({ err: "totime is required" });
+  if (!payment) return res.status(400).send({ err: "payment is required" });
+  if (!category) return res.status(400).send({ err: "category is required" });
+  if (!career) return res.status(400).send({ err: "career is required" });
   if (!employeesNum)
-    return res.status(400).send({ err: 'employeesNum is required' });
+    return res.status(400).send({ err: "employeesNum is required" });
   if (!businessRegistration)
-    return res.status(400).send({ err: 'businessRegistration is required' });
+    return res.status(400).send({ err: "businessRegistration is required" });
   if (!certificate)
-    return res.status(400).send({ err: 'certificate is required' });
-  if (!address) return res.status(400).send({ err: 'address is required' });
-  if (!lat) return res.status(400).send({ err: 'lat is required' });
-  if (!lng) return res.status(400).send({ err: 'lng is required' });
+    return res.status(400).send({ err: "certificate is required" });
+  if (!address) return res.status(400).send({ err: "address is required" });
+  if (!lat) return res.status(400).send({ err: "lat is required" });
+  if (!lng) return res.status(400).send({ err: "lng is required" });
 
   // 3. 형식 점검
-  if (typeof authentication !== 'boolean')
-    return res.status(400).send({ err: 'authentication must be a boolean' });
+  if (typeof authentication !== "boolean")
+    return res.status(400).send({ err: "authentication must be a boolean" });
 
   // 4. name.first and name.last가 존재하는지 그리고 type이 String인지 점검
-  if (typeof businessRegistration !== 'boolean')
+  if (typeof businessRegistration !== "boolean")
     return res
       .status(400)
-      .send({ err: 'businessRegistration must be boolean' });
+      .send({ err: "businessRegistration must be boolean" });
 
   // // 5. Update Data 생성 (mongodb에서 수정과 업데이트를 동시에 진행, 장점 속도빠름 ,단점:여러정도 바꿀때 불편)
   // let updateBody = {};
