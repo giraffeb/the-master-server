@@ -9,6 +9,32 @@ const { Review } = require("../models");
 // @access    Public
 const getMasters = asyncHandler(async (req, res, next) => {
   try {
+
+    var list = await Master.aggregate([
+      { $lookup:
+          {
+             from: "reviews",
+             foreignField: "masterID",          // field in the servicecategories collection
+             localField: "_id",            // field in the QuotStep collection
+             as: "review",                   
+          }
+          //$group: {_id: "$$review.masterID", avg_score:{$avg: "$$review.score"}}
+      },
+      { $unwind: { path: "$review", preserveNullAndEmptyArrays: true }
+      },
+      {$project: {_id:1, score: "$review.score", updatedAt: "$review.updatedAt"}}      
+      /*, 
+      { $group: {
+        _id: "$_id", avg_score: {$avg: "$score"}
+      }}
+      */
+      /*, 
+      { $group: {
+        _id: "$review.masterID", avg_score: {$avg: "$review.score"}
+      }}*/
+    ]);
+
+    /*
     var list = await Review.aggregate([
       {$group: {_id: "$masterID", avg_score:{$avg: "$score"}, total:{$sum:1}}},
       {$unwind: {
@@ -27,7 +53,9 @@ const getMasters = asyncHandler(async (req, res, next) => {
       }},
       {$sort: {total: -1}}
     ]);
-  
+   */
+
+    console.log('list', list.length);
     return res.json({ list });
   } catch (err) {
     console.log('err', err);
