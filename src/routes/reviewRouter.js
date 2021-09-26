@@ -50,4 +50,4 @@ reviewRouter.get('/', async (req, res) => {
   return res.send({ reviews });
 });
 
-module.exports = { reviewRouter };
+module.exports = reviewRouter;

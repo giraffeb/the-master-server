@@ -30,7 +30,12 @@ const MasterSchema = new Schema(
     address: { type: String, required: true },
     lat: { type: String, required: true },
     lng: { type: String, required: true },
-    token: { type: String, required: true },
+    token: { type: String },
+    admin: {
+      type: Boolean,
+      require: true,
+      default: false,
+    },
   },
   //   timestamps: true =>모델의 CreatedAt , UpdatedAt 생성
   { timestamps: true }

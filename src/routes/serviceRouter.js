@@ -198,4 +198,4 @@ serviceRouter.delete('/:serviceId', async (req, res) => {
   }
 });
 
-module.exports = { serviceRouter };
+module.exports = serviceRouter;
