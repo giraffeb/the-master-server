@@ -1,14 +1,10 @@
 const express = require('express');
 const app = express();
 const config = require('./config/key');
+require('express-async-errors');
 const cookieParser = require('cookie-parser');
 
-const {
-  memberRouter,
-  masterRouter,
-  reviewRouter,
-  serviceRouter,
-} = require('./routes');
+const routers = require("./routes");
 
 const { generateFakeData } = require('../faker');
 
@@ -25,13 +21,12 @@ const server = async () => {
     // 100명의 유저가 10개의 포스트를 작성하고 30개의 댓글을 입력한다.
     // await generateFakeData(100, 10, 300);
 
-    // Router Setting
-    app.use('/member', memberRouter);
-    app.use('/master', masterRouter);
-    app.use('/service', serviceRouter);
-    app.use('/service/:serviceId/review', reviewRouter);
-    app.use('/common', require('./routes/common/categoryRoute'));
-    app.use('/main', require('./routes/mainRoute'));
+    app.use(routers);
+    
+    //단순 접속 테스트
+    app.get("/hello", (req, res)=>{
+      res.send("hello");
+    });
 
     // Server Port
     app.listen(3000, () => {
