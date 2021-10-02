@@ -2,6 +2,7 @@ const express = require('express');
 const categoryRoute = express.Router();
 
 const { ServiceCategory } = require("../../models/base/ServiceCategory");
+const categoryService = require("../../services/categoryService");
 
 // @desc      Get a Master
 // @route     Get /
@@ -14,6 +15,21 @@ categoryRoute.get('/servicelist', async (req, res, next) => {
   return res.status(500).json({
       servicelist: list
   });
+});
+
+categoryRoute.get("/location/:location", async (req, res)=>{
+  //TODO: validate
+
+  const { 
+    location
+  } = req.params;
+
+  const categories = await categoryService.findAllCategoriesByLocation();
+
+  res.json({
+    categories
+  });
+
 });
 
 module.exports = categoryRoute;

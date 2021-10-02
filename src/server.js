@@ -3,6 +3,7 @@ const app = express();
 const config = require('./config/key');
 require('express-async-errors');
 const cookieParser = require('cookie-parser');
+const { errorHandler } = require('./middleware/error')
 
 const routers = require("./routes");
 
@@ -27,6 +28,8 @@ const server = async () => {
     app.get("/hello", (req, res)=>{
       res.send("hello");
     });
+
+    app.use(errorHandler);
 
     // Server Port
     app.listen(3000, () => {
